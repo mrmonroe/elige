@@ -2,8 +2,10 @@ import * as ROT from 'rot-js';
 import { SETTINGS } from './Settings';
 import { Map } from './Map';
 import { Player } from './Player';
-import { Controls } from './Controls';
-import { Scheduler } from './Scheduler';
+import { Controls } from './core/Controls';
+import { Enemy } from './Enemy';
+import { Pathfinder } from './core/Pathfinder';
+//import { Scheduler } from './Scheduler';
 
 export class Game {
   public static readonly WIDTH = SETTINGS.MAP.WIDTH;
@@ -14,7 +16,9 @@ export class Game {
   map: Map;
   win: boolean;
   controls: Controls;
-  scheduler: Scheduler;
+  enemy: Enemy;
+  enemyAI: Pathfinder;
+  //scheduler: Scheduler;
 
   constructor() {
     this.display = new ROT.Display({
@@ -23,40 +27,41 @@ export class Game {
       forceSquareRatio: true,
       spacing: 1
     });
-    this.player = new Player('The Dude', Game.WIDTH / 2, Game.HEIGHT / 2);
-    this.map = new Map(this.display);
     this.win = false;
+    this.map = new Map(this.display);
+    this.player = new Player('The Dude');
+    this.enemy = new Enemy();
+    this.enemyAI = new Pathfinder(this.map.tiles, this.enemy, this.player);
     this.controls = new Controls();
-    this.scheduler = new Scheduler();
-    this.scheduler.register(this.player);
-
-    //add to window
+    this.map.addActor(this.enemy);
+    this.map.addActor(this.player);
+    this.init();
+  }
+  init() {
     const container = this.display.getContainer()!;
     document.getElementById('game')?.appendChild(container);
-    //render
 
     window.addEventListener('keydown', (event) => {
       this.update(event);
     });
 
     this.render();
-    this.scheduler.start();
-
-    //update on keydown
   }
 
   render() {
     this.map.draw();
+    this.enemy.draw(this.display);
     this.player.draw(this.display);
   }
   update(event: any) {
     this.display.clear();
+    this.player.handleMove(this.controls, this.map, event);
 
-    let plyMove = this.controls.handleInput(event.key);
-    if (typeof plyMove !== 'undefined') {
-      this.player.x += plyMove.dx;
-      this.player.y += plyMove.dy;
-    }
+    console.dir(this.enemy);
+    const coord = this.enemyAI.update();
+    console.dir(coord);
+    this.enemy.x = coord.nx;
+    this.enemy.y = coord.ny;
 
     this.render();
   }

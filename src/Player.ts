@@ -1,26 +1,25 @@
-import * as ROT from 'rot-js';
-import { Entity } from './Entity';
+// import * as ROT from 'rot-js';
+import { Controls } from './core/Controls';
+import { Entity } from './core/Entity';
+import { Map } from './Map';
 
 export class Player extends Entity {
   name: string;
-  constructor(name: string, startX: number, startY: number) {
+  constructor(name: string, startX: number = 0, startY: number = 0) {
     super(startX, startY, '@');
     this.x = startX;
     this.y = startY;
     this.name = name;
   }
+  handleMove(controls: Controls, map: Map, event: any) {
+    let plyMove = controls.handleInput(event.key);
 
-  spawn(map: any, display: ROT.Display) {
-    const index = Math.floor(ROT.RNG.getUniform() * map.length);
-    const key = map.splice(index, 1)[0];
-    const parts = key.split(',');
-    this.x = parseInt(parts[0]);
-    this.y = parseInt(parts[1]);
-    this.draw(display);
-  }
-
-  draw(display: ROT.Display) {
-    display.draw(this.x, this.y, this.char, this.fg, this.bg);
+    if (typeof plyMove !== 'undefined') {
+      if (map.isWalkable(this.x + plyMove.dx, this.y + plyMove.dy)) {
+        this.x += plyMove.dx;
+        this.y += plyMove.dy;
+      }
+    }
   }
 }
 

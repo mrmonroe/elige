@@ -1,3 +1,4 @@
+import * as ROT from 'rot-js';
 export class Entity {
   x: number;
   y: number;
@@ -11,6 +12,9 @@ export class Entity {
     this.char = char;
     this.fg = fg;
     this.bg = bg;
+  }
+  draw(display: ROT.Display) {
+    display.draw(this.x, this.y, this.char, this.fg, this.bg);
   }
 }
 

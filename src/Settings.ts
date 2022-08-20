@@ -1,8 +1,8 @@
 export const SETTINGS = {
   MAP: {
-    FLOORCHAR: '.',
-    HEIGHT: 30,
-    WIDTH: 40
+    FLOORCHAR: ' ',
+    HEIGHT: 28,
+    WIDTH: 70
   },
   SAVEFILE: 'evasave.json'
 };
@@ -10,6 +10,7 @@ export const SETTINGS = {
 export const COLORS = {
   BLACK: '#111',
   WHITE: '#eee',
-  FLOOR: '#777'
+  FLOOR: '#777',
+  STONE: '#766'
 };
 

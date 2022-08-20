@@ -1,5 +1,5 @@
 import * as ROT from 'rot-js';
-import Simple from 'rot-js/lib/scheduler/simple';
+import type Simple from 'rot-js/lib/scheduler/simple';
 
 export class Scheduler {
   scheduler: Simple;
