@@ -9,6 +9,7 @@ declare global {
 
 window.addEventListener('DOMContentLoaded', () => {
   window.game = new Game();
+  console.dir(window.game);
 });
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `

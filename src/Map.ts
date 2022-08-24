@@ -12,6 +12,7 @@ export class Map {
   display: any;
   data: any;
   walls: any;
+  actors: Entity[];
 
   constructor(display: ROT.Display) {
     this.map = new ROT.Map.Digger(Map.WIDTH, Map.HEIGHT, {
@@ -24,17 +25,17 @@ export class Map {
     this.tiles = [];
     this.walls = [];
     this.data = {};
-    this.generate();
-    this.draw();
+    this.actors = [];
   }
   generate() {
     const drawTiles = (x: number, y: number, value: number) => {
+      this.data[x + ',' + y] = value;
       if (value) {
-        const wKey = `${x},${y}`;
+        const wKey = x + ',' + y;
         this.walls[wKey] = { char: '#' };
         return;
       }
-      const key: string = `${x},${y}`;
+      const key: string = x + ',' + y;
       this.tiles[key] = { char: SETTINGS.MAP.FLOORCHAR };
     };
     this.map.create(drawTiles);
@@ -91,24 +92,47 @@ export class Map {
       if (
         tileKeys[i].fx == x &&
         tileKeys[i].fy == y &&
-        this.tiles[`${tileKeys[i].fx},${tileKeys[i].fy}`].char == SETTINGS.MAP.FLOORCHAR
+        this.tiles[`${tileKeys[i].fx},${tileKeys[i].fy}`].char ==
+          SETTINGS.MAP.FLOORCHAR
       ) {
         return true;
       }
     }
     return false;
   }
-  addActor(actor: Entity) {
+  addActor(actor: any) {
+    this.actors.push(actor);
     const floor = this.getTileKeys();
     const rnd = ROT.RNG.getUniformInt(0, floor.length);
     actor.x = floor[rnd].fx;
     actor.y = floor[rnd].fy;
-    actor.draw(this.display);
+    this.display.draw(actor.x, actor.y, actor.char, actor.fg);
   }
   addActorAt(actor: Entity, x: number, y: number) {
+    this.actors.push(actor);
     actor.x = x;
     actor.y = y;
-    actor.draw(this.display);
+    this.display.draw(actor.x, actor.y, actor.char, actor.fg);
+  }
+  addManyActors(actors: []) {
+    this.actors = this.actors.concat(actors);
+    console.log('actors: ', this.actors);
+    for (let i = 0; i < this.actors.length; i++) {
+      const floor = this.getTileKeys();
+      const rnd = ROT.RNG.getUniformInt(0, floor.length);
+      this.actors[i].x = floor[rnd].fx;
+      this.actors[i].y = floor[rnd].fy;
+    }
+  }
+  drawAllActors() {
+    for (let i = 0; i < this.actors.length; i++) {
+      this.display.draw(
+        this.actors[i].x,
+        this.actors[i].y,
+        this.actors[i].char,
+        this.actors[i].fg
+      );
+    }
   }
 }
 

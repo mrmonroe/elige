@@ -1,4 +1,4 @@
-import { Entity } from './core/Entity';
+import { Entity } from './Entity';
 
 export class Enemy extends Entity {
   name: string;
