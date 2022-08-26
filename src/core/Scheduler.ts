@@ -1,5 +1,4 @@
 import * as ROT from 'rot-js';
-import Scheduler from 'rot-js/lib/scheduler/scheduler';
 import type Simple from 'rot-js/lib/scheduler/simple';
 
 export class GGScheduler {

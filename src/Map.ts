@@ -1,76 +1,75 @@
-import * as ROT from 'rot-js';
+import { Display, RNG } from 'rot-js';
+import Digger from 'rot-js/lib/map/digger';
 import { Entity } from './core/Entity';
+import { Goal } from './core/Goal';
 import { COLORS, SETTINGS } from './Settings';
-import { Pathfinder } from './core/Pathfinder';
 
 export class Map {
   public static readonly WIDTH = SETTINGS.MAP.WIDTH;
   public static readonly HEIGHT = SETTINGS.MAP.HEIGHT;
 
-  map: any;
+  map: Digger;
   tiles!: any;
   display: any;
   data: any;
   walls: any;
   actors: Entity[];
+  dWidth: number;
+  dHeight: number;
+  tileKeys: any;
+  walkables: any;
 
-  constructor(display: ROT.Display) {
-    this.map = new ROT.Map.Digger(Map.WIDTH, Map.HEIGHT, {
-      dugPercentage: 0.9,
-      roomHeight: [4, 12],
+  constructor() {
+    const mapOpts: any = {
+      dugPercentage: 0.2,
+      roomHeight: [4, 8],
       roomWidth: [4, 10],
       corridorLength: [3, 5]
-    });
-    this.display = display;
-    this.tiles = [];
-    this.walls = [];
+    };
+    this.map = new Digger(Map.WIDTH, Map.HEIGHT, mapOpts);
+    this.display = null!;
+    this.dWidth = null!;
+    this.dHeight = null!;
     this.data = {};
     this.actors = [];
+    this.walkables = {};
+    this.walls = {};
   }
-  generate() {
-    const drawTiles = (x: number, y: number, value: number) => {
-      this.data[x + ',' + y] = value;
-      if (value) {
-        const wKey = x + ',' + y;
-        this.walls[wKey] = { char: '#' };
-        return;
+  generate(mapHeight: number, mapWidth: number) {
+    this.dWidth = mapWidth;
+    this.dHeight = mapHeight;
+    this.display = new Display({
+      width: mapWidth,
+      height: mapHeight,
+      forceSquareRatio: true,
+      spacing: 1
+    });
+    const drawTilesCb = (x: number, y: number, value: number) => {
+      if (!value) {
+        this.walkables[x + ',' + y] = value;
+      } else {
+        this.walls[x + ',' + y] = value;
       }
-      const key: string = x + ',' + y;
-      this.tiles[key] = { char: SETTINGS.MAP.FLOORCHAR };
+      this.data[x + ',' + y] = value;
     };
-    this.map.create(drawTiles);
+
+    this.map.create(drawTilesCb);
+  }
+
+  drawActor(actor: any) {
+    this.display.draw(actor.x, actor.y, actor.char, actor.fg);
   }
   draw() {
-    for (var key in this.tiles) {
-      var parts = key.split(',');
-      var x = parseInt(parts[0]);
-      var y = parseInt(parts[1]);
-
-      this.display.draw(x, y, this.tiles[key].char, COLORS.FLOOR);
-    }
-
-    for (var key in this.walls) {
-      var parts = key.split(',');
-      var x = parseInt(parts[0]);
-      var y = parseInt(parts[1]);
-
-      this.display.draw(x, y, this.walls[key].char, COLORS.STONE);
+    for (var key in this.data) {
+      const { x, y } = this.getTileCoord(key);
+      if (this.data[key]) {
+        this.display.draw(x, y, '#', COLORS.STONE);
+      } else {
+        this.display.draw(x, y, ' ', COLORS.FLOOR);
+      }
     }
   }
-  getTileKeys() {
-    let tileObj = [];
-    for (var key in this.tiles) {
-      var parts = key.split(',');
 
-      var x = parseInt(parts[0]);
-      var y = parseInt(parts[1]);
-      tileObj.push({
-        fx: x,
-        fy: y
-      });
-    }
-    return tileObj;
-  }
   getRooms() {
     return this.map._rooms;
   }
@@ -86,43 +85,26 @@ export class Map {
       height: this.map._height
     };
   }
-  isWalkable(x: number, y: number) {
-    const tileKeys = this.getTileKeys();
-    for (let i = 0; i < tileKeys.length; i++) {
-      if (
-        tileKeys[i].fx == x &&
-        tileKeys[i].fy == y &&
-        this.tiles[`${tileKeys[i].fx},${tileKeys[i].fy}`].char ==
-          SETTINGS.MAP.FLOORCHAR
-      ) {
-        return true;
-      }
-    }
-    return false;
+
+  isWalkable = (x: number, y: number) => {
+    const keys = Object.keys(this.walkables);
+    return keys.indexOf(x + ',' + y) !== -1;
+  };
+  addAny(player: Entity | Goal, willDataChange: boolean) {
+    this.randomPlacement(player, willDataChange);
   }
-  addActor(actor: any) {
+  addActor(actor: Entity, willDataChange: boolean) {
+    this.randomPlacement(actor, willDataChange);
     this.actors.push(actor);
-    const floor = this.getTileKeys();
-    const rnd = ROT.RNG.getUniformInt(0, floor.length);
-    actor.x = floor[rnd].fx;
-    actor.y = floor[rnd].fy;
-    this.display.draw(actor.x, actor.y, actor.char, actor.fg);
   }
   addActorAt(actor: Entity, x: number, y: number) {
     this.actors.push(actor);
     actor.x = x;
     actor.y = y;
-    this.display.draw(actor.x, actor.y, actor.char, actor.fg);
   }
   addManyActors(actors: []) {
     this.actors = this.actors.concat(actors);
-    console.log('actors: ', this.actors);
-    for (let i = 0; i < this.actors.length; i++) {
-      const floor = this.getTileKeys();
-      const rnd = ROT.RNG.getUniformInt(0, floor.length);
-      this.actors[i].x = floor[rnd].fx;
-      this.actors[i].y = floor[rnd].fy;
-    }
+    for (let i = 0; i < this.actors.length; i++) {}
   }
   drawAllActors() {
     for (let i = 0; i < this.actors.length; i++) {
@@ -133,6 +115,30 @@ export class Map {
         this.actors[i].fg
       );
     }
+  }
+
+  randomPlacement(actor: Entity | Goal, willDataChange: boolean) {
+    const { x, y } = this.getRandomFloorCoord();
+    actor.x = x;
+    actor.y = y;
+    if (willDataChange) {
+      this.data[x + ',' + y] = 1;
+    }
+  }
+  getRandomFloorCoord() {
+    const keys = Object.keys(this.walkables);
+    const rIdx = RNG.getUniformInt(0, keys.length);
+    RNG.getUniformInt(0, this.data.length);
+
+    return this.getTileCoord(keys[rIdx]);
+  }
+  getTileCoord(key: string) {
+    var parts = key.split(',');
+
+    var x = parseInt(parts[0]);
+    var y = parseInt(parts[1]);
+
+    return { x, y };
   }
 }
 

@@ -8,8 +8,7 @@ declare global {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  window.game = new Game();
-  console.dir(window.game);
+  new Game();
 });
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `

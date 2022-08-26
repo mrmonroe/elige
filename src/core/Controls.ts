@@ -19,8 +19,16 @@ export class Controls {
       ArrowRight: new Movement(1, 0)
     };
   }
-  handleInput(key: any) {
+  handleMoveInput(key: any) {
     return this.MOVE_KEYS[key];
+  }
+  isAllowedKey(key: any) {
+    const keys = this.getKeyArray();
+    console.log('allowed', keys.indexOf(key) !== -1);
+    return keys.indexOf(key) !== -1;
+  }
+  getKeyArray() {
+    return Object.keys(this.MOVE_KEYS);
   }
 }
 
