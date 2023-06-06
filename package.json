@@ -16,7 +16,7 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "typescript": "^4.6.4",
-    "vite": "^3.0.7"
+    "vite": "^3.2.7"
   },
   "dependencies": {
     "ascii-art": "^2.8.5",
